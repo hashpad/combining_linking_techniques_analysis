@@ -1,8 +1,6 @@
-from nif_loader import NifLoader
 from bert_loader import BertLoader
 import constants
 
-from rdflib import Graph, Namespace
 from helpers import hashStringSha256
 from transformers import BertTokenizer
 import torch
@@ -13,27 +11,22 @@ import json
 from typing import List, cast
 
 
-nifLoaders = [NifLoader(filePath=file_path) for file_path in constants.file_paths]
+
 
 bertLoader = BertLoader()
 
 class DocumentBertTokenizer:
     def __init__(self, tokenizer: BertTokenizer, model) -> None:
-        self._nif = Namespace(
-            "http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#"
-        )
-        self._itsrdf = Namespace("http://www.w3.org/2005/11/its/rdf#")
         self._tokenizer = tokenizer
         self._model = model
 
 
-    def getDocuments(self, g: Graph) -> List[str]:
+    def getDocuments(self, labels_file_path: str) -> List[str]:
         documents = []
-        for subj, _, obj in g:
-            if obj == self._nif.Context:
-                for _, p, o in g.triples((subj, None, None)):
-                    if p == self._nif.isString:
-                        documents.append(o)
+        with open(labels_file_path) as f:
+            data = json.load(f)
+        for _, doc_info in data.items():
+            documents.append(doc_info['doc'])
         return documents
 
     def convert2TokenIds(self, document: str) -> List[int]:
@@ -63,17 +56,18 @@ class DocumentBertTokenizer:
         return torch.mean(embeddings, dim=0)
 
     def saveDocEmbeddings(self, file_path: str) -> None:
+        output_path = file_path.replace("labeled", "embeddings")
         non_existing_in_hash_folder = []
 
         existing_results = []
-        if os.path.exists(file_path):
+        if os.path.exists(output_path):
             # os.remove(file_path)
-            with open(file_path, "r") as json_file:
+            with open(output_path, "r") as json_file:
                existing_results = json.load(json_file)
         else:
             existing_results = []
 
-        for doc in tqdm(bt.getDocuments(nifLoader.graph)):
+        for doc in tqdm(bt.getDocuments(file_path)):
             hash_value = hashStringSha256(doc)
             # if not os.path.exists("path to hashes" + str(hash_value) + ".json"):
             #     non_existing_in_hash_folder.append({
@@ -81,7 +75,7 @@ class DocumentBertTokenizer:
             #         "doc": doc
             #     })
 
-            if any(result["hash"] == hash_value for result in existing_results):
+            if any(result == hash_value for result in existing_results):
                 continue
 
             token_ids = bt.convert2TokenIds(doc)
@@ -94,15 +88,12 @@ class DocumentBertTokenizer:
             }
             existing_results.append(new_result)
 
-        with open(file_path, "w") as json_file:
+        with open(output_path, "w") as json_file:
                 json.dump(existing_results, json_file)   
         print(non_existing_in_hash_folder)
 
 bt = DocumentBertTokenizer(bertLoader.tokenizer, bertLoader.model)
 
-for nifLoader in nifLoaders:
-    print(nifLoader.file_path + "\n")
-    print("----------")
-    tokens_file = nifLoader.file_path + ("_tokens_")
-    bt.saveDocEmbeddings(tokens_file)
-    break
+docs_list = [file_path + "_labeled_.json" for file_path in constants.file_paths]
+for doc in docs_list:
+    bt.saveDocEmbeddings(doc)

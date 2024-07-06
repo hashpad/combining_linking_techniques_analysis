@@ -10,7 +10,7 @@ import json
 from typing import List, cast
 
 nifLoaders = [NifLoader(filePath=file_path) for file_path in constants.file_paths]
-
+print(constants.file_paths[2])
 WIKI_RESOURCE = "wiki_resource"
 TYPES = "types"
 BACKUP_FILE = "backup.json"
@@ -26,7 +26,6 @@ class NerTypeFinder:
 
     def sparqlQuery(self, resource: str) -> List[str]:
         localG = Graph()
-        print("----------- SPARQL QUERY ----------")
         qres = localG.query(f"""
             SELECT ?atype
             WHERE {{
@@ -64,27 +63,37 @@ class NerTypeFinder:
         except Exception:
             return False
 
-
     def getTypesFromDBPedia(self, g: Graph) -> None:
         for subj, _, obj in g:
-            if obj == self._nif.Phrase:
+            if obj == self._nif.Phrase or obj == self._nif.RFC5147String:
                 ta_ident_ref = None
                 for _, p, o in g.triples((subj, None, None)):
                     data = {WIKI_RESOURCE: "", TYPES: None}
 
                     if p == self._itsrdf.taIdentRef:
                         ta_ident_ref = o
-                        resource = Literal(
-                            str(ta_ident_ref).replace(
-                                "en.wikipedia.org/wiki/", "dbpedia.org/resource/"
+                        resource_str = (
+                            str(ta_ident_ref)
+                            .replace("en.wikipedia.org/wiki/", "dbpedia.org/resource/")
+                            .replace(
+                                "aksw.org/notInWiki/", "dbpedia.org/resource/"
+                            )
+                            .replace(
+                                "de.dbpedia.org/", "dbpedia.org/"
                             )
                         )
+                        resource = Literal(resource_str)
+
                         if not (self.dataBackedUp(str(ta_ident_ref))):
+                            print("new look up")
+                            print(f"Resource: {resource}")
                             result_list = self.sparqlQuery(resource)
+                            print(f"Result List: {result_list}")
+                            print(f"Original resource: {o}")
+                            print("end look up")
                             object_value = Literal(",".join(result_list))
                             data[WIKI_RESOURCE] = o
                             data[TYPES] = object_value
-                            print(data)
                             self.backupDBPediaData(data)
 
     def getTypesFromFile(self, wiki_resource: str) -> str:
@@ -101,7 +110,7 @@ class NerTypeFinder:
 
     def insertTypesIntoGraphFromDisk(self, g: Graph) -> None:
         for subj, _, obj in tqdm(g):
-            if obj == self._nif.Phrase:
+            if obj == self._nif.Phrase or obj == self._nif.RFC5147String:
                 ta_ident_ref = None
                 for _, p, o in g.triples((subj, None, None)):
                     if p == self._itsrdf.taIdentRef:
@@ -114,7 +123,7 @@ class NerTypeFinder:
 ntf = NerTypeFinder()
 for nifLoader in nifLoaders:
     print(nifLoader.file_path.split("/")[-1])
-    # ntf.getTypesFromDBPedia(nifLoader.graph)
-    #ntf.insertTypesIntoGraphFromDisk(nifLoader.graph)
+    ntf.getTypesFromDBPedia(nifLoader.graph)
+    ntf.insertTypesIntoGraphFromDisk(nifLoader.graph)
     file_name_split = nifLoader.file_path.split(".")
     nifLoader.writeGraphToFile(file_name_split[0] + "_typed_." + file_name_split[1])

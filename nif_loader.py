@@ -1,10 +1,6 @@
-import constants
-
 from rdflib import Graph, Namespace
 
 from typing import Dict, Set
-
-
 
 
 class NifLoader:
@@ -19,7 +15,6 @@ class NifLoader:
     def writeGraphToFile(self, output_file_path: str) -> None:
         self.graph.serialize(destination=output_file_path, format="turtle")
 
-    # returns list of (id: {doc, mentions})
     def getDocumentsMentionsPairs(self) -> Dict[str, Dict[str, str | Set[str]]]:
         documents = {}
         g = self.graph
@@ -30,10 +25,7 @@ class NifLoader:
             try:
                 doc_id = sub.split("/")[-1].split("#")[0]
                 if doc_id not in documents:
-                    documents[doc_id] = {
-                        "doc": "",
-                        "mentions": []
-                    }
+                    documents[doc_id] = {"doc": "", "mentions": []}
             except Exception:
                 continue
             if "isString" in pred:
@@ -43,11 +35,13 @@ class NifLoader:
                 beginIndex = sub.split("char=")[1].split(",")[0]
                 documents[doc_id]["mentions"].append(beginIndex + "_" + obj)
 
-
         # remove empty doc (e.g., in the case of broader context entry)
-        documents = {doc_id: doc_info for doc_id, doc_info in documents.items() if doc_info["doc"] != ""}
+        documents = {
+            doc_id: doc_info
+            for doc_id, doc_info in documents.items()
+            if doc_info["doc"] != ""
+        }
         return documents
 
 
-nifLoader = NifLoader(filePath=constants.file_paths[1])
-#s = nifLoader.getDocumentsMentionsPairs()
+#nifLoader = NifLoader(filePath=constants.file_paths[1])
