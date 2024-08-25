@@ -1,2 +1,7 @@
 venv
+data
 __pycache__
+sentiment_classification
+saved_model
+*.pickel
+model

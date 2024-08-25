@@ -8,11 +8,11 @@ from typing import Dict, cast, Set, List
 import json
 import os
 
-#nifs = [NifLoader(filePath=file_path) for file_path in constants.file_paths if "nif" in file_path or "ttl" in file_path]
-#jsons = [JsonLoader(filePath=file_path) for file_path in constants.file_paths if "json" in file_path]
+nifs = [NifLoader(filePath=file_path) for file_path in constants.file_paths if "nif" in file_path or "ttl" in file_path]
+jsons = [JsonLoader(filePath=file_path) for file_path in constants.file_paths if "json" in file_path]
 
 #EXCLUDE_SYSTEMS = ['REL MD (.properties)', 'REL']
-EXCLUDE_SYSTEMS = []
+EXCLUDE_SYSTEMS = ['CLOCQ', 'Falcon 2.0', 'OpenTapioca', 'REL']
 
 class MetricCalculator:
     def __init__(self) -> None:
@@ -110,13 +110,13 @@ class MetricCalculator:
         return labeled_gold_documents
 
 
-# docs_list = [nif.getDocumentsMentionsPairs() for nif in nifs] + [jsonF.getDocumentsMentionsPairs() for jsonF in jsons]
-# mc = MetricCalculator()
+docs_list = [nif.getDocumentsMentionsPairs() for nif in nifs] + [jsonF.getDocumentsMentionsPairs() for jsonF in jsons]
+mc = MetricCalculator()
 
-# for idx, json_path in enumerate(constants.json_paths):
-#     s = mc.generateLabels(docs_list[idx], json_path)
-#     output_file = constants.file_paths[idx] + "_labeled_.json"
-#     if os.path.exists(output_file):
-#         os.remove(output_file)
-#     with open(output_file, "w") as out:
-#         json.dump(s, out)
+for idx, json_path in enumerate(constants.json_paths):
+    s = mc.generateLabels(docs_list[idx], json_path)
+    output_file = constants.file_paths[idx] + "_labeled_fewer_classes.json"
+    if os.path.exists(output_file):
+        os.remove(output_file)
+    with open(output_file, "w") as out:
+        json.dump(s, out)
