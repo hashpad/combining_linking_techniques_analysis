@@ -8,7 +8,7 @@ from sklearn.dummy import DummyClassifier
 
 
 
-from sklearn.metrics import accuracy_score, f1_score, recall_score
+from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score
 
 from typing import Tuple
 
@@ -16,8 +16,6 @@ class Trainer:
     def __init__(self) -> None:
         self.models = {
             'dummy_mf': DummyClassifier(strategy="most_frequent"),
-            'dummy_pr': DummyClassifier(strategy="prior"),
-            'dummy_st': DummyClassifier(strategy="stratified"),
             'dummy_un': DummyClassifier(strategy="uniform"),
             'random_forest': RandomForestClassifier(),
             'svm': SVC(),
@@ -69,7 +67,8 @@ class Trainer:
         accuracy = accuracy_score(y_true, y_pred)
         f1 = f1_score(y_true, y_pred, average='weighted')
         recall = recall_score(y_true, y_pred, average='weighted')
-        return accuracy, f1, recall
+        precision = precision_score(y_true, y_pred, average='weighted')
+        return accuracy, f1, recall, precision
 
     def get_best_params(self):
         return self.best_params
