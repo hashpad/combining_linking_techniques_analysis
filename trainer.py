@@ -57,6 +57,9 @@ class Trainer:
             self.trained_models[name] = grid_search.best_estimator_
             self.best_params[name] = grid_search.best_params_
 
+    def get_trained_models(self):
+        return self.trained_models
+
     def predict(self, X_test):
         predictions = {}
         for name, model in self.trained_models.items():
@@ -65,10 +68,16 @@ class Trainer:
 
     def evaluate(self, y_true, y_pred) -> Tuple[float, float, float]:
         accuracy = accuracy_score(y_true, y_pred)
-        f1 = f1_score(y_true, y_pred, average='weighted')
-        recall = recall_score(y_true, y_pred, average='weighted')
-        precision = precision_score(y_true, y_pred, average='weighted')
-        return accuracy, f1, recall, precision
+        f1_weighted = f1_score(y_true, y_pred, average='weighted')
+        recall_weighted = recall_score(y_true, y_pred, average='weighted')
+        precision_weighted = precision_score(y_true, y_pred, average='weighted')
+        f1_macro = f1_score(y_true, y_pred, average='macro')
+        recall_macro = recall_score(y_true, y_pred, average='macro')
+        precision_macro = precision_score(y_true, y_pred, average='macro')
+        f1_micro = f1_score(y_true, y_pred, average='micro')
+        recall_micro = recall_score(y_true, y_pred, average='micro')
+        precision_micro = precision_score(y_true, y_pred, average='micro')
+        return accuracy, f1_weighted, recall_weighted, precision_weighted, f1_macro, recall_macro, precision_macro, f1_micro, recall_micro, precision_micro,
 
     def get_best_params(self):
         return self.best_params
