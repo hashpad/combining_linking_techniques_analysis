@@ -3,5 +3,7 @@ data
 __pycache__
 sentiment_classification
 saved_model
-*.pickel
 model
+*.pickle
+*.json
+*.pdf
