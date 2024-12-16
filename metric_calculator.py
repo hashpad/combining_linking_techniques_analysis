@@ -11,9 +11,7 @@ import os
 nifs = [NifLoader(filePath=file_path) for file_path in constants.file_paths if "nif" in file_path or "ttl" in file_path]
 jsons = [JsonLoader(filePath=file_path) for file_path in constants.file_paths if "json" in file_path]
 
-#EXCLUDE_SYSTEMS = ['REL MD (.properties)', 'REL']
-EXCLUDE_SYSTEMS = ['CLOCQ', 'Falcon 2.0', 'OpenTapioca', 'REL']
-
+EXCLUDE_SYSTEMS = []
 class MetricCalculator:
     def __init__(self) -> None:
         pass
@@ -34,7 +32,7 @@ class MetricCalculator:
         return [f.path.split("/")[-1] for f in os.scandir(root_dir) if f.is_dir()]
 
     def calculate_f1(self, predicted_set, reference_set):
-        f1 = 0
+        f1 = .0
         TP = predicted_set.intersection(reference_set, predicted_set)
         FP = predicted_set.difference(reference_set)
         FN = reference_set.difference(predicted_set)
@@ -102,6 +100,8 @@ class MetricCalculator:
 
             if len(label) != 0:
                 filtered_labels = list(filter(lambda x: x['system'] not in EXCLUDE_SYSTEMS, label))
+                if len(filtered_labels) == 0:
+                    continue
                 max_f1 = max([entry['f1'] for entry in filtered_labels])
                 max_objects = [entry for entry in filtered_labels if entry['f1'] == max_f1]
                 labeled_gold_documents[text_hash]["label"] = max_objects
@@ -109,14 +109,14 @@ class MetricCalculator:
 
         return labeled_gold_documents
 
+if __name__ == "__main__":
+    docs_list = [nif.getDocumentsMentionsPairs() for nif in nifs] + [jsonF.getDocumentsMentionsPairs() for jsonF in jsons]
+    mc = MetricCalculator()
 
-docs_list = [nif.getDocumentsMentionsPairs() for nif in nifs] + [jsonF.getDocumentsMentionsPairs() for jsonF in jsons]
-mc = MetricCalculator()
-
-for idx, json_path in enumerate(constants.json_paths):
-    s = mc.generateLabels(docs_list[idx], json_path)
-    output_file = constants.file_paths[idx] + "_labeled_fewer_classes.json"
-    if os.path.exists(output_file):
-        os.remove(output_file)
-    with open(output_file, "w") as out:
-        json.dump(s, out)
+    for idx, json_path in enumerate(constants.json_paths):
+        s = mc.generateLabels(docs_list[idx], json_path)
+        output_file = constants.file_paths[idx] + "_labeled_fewer_classes.json"
+        if os.path.exists(output_file):
+            os.remove(output_file)
+        with open(output_file, "w") as out:
+            json.dump(s, out)

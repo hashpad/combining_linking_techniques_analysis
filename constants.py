@@ -2,7 +2,7 @@ import os
 HOME = os.path.expanduser("~")
 print(HOME)
 
-file_paths = [  HOME + "/analysis/analysis/analysis/combining_linking_techniques_analysis/data/datasets" + path for path in
+file_paths = [  HOME + "/analysis/data/datasets" + path for path in
                 [
                 "/KORE50/KORE_50_DBpedia.ttl",
                 "/Reuters/Reuters-128.ttl",
@@ -13,7 +13,7 @@ file_paths = [  HOME + "/analysis/analysis/analysis/combining_linking_techniques
                 ]
              ]
 
-json_paths = [  HOME + "/analysis/analysis/analysis/combining_linking_techniques_analysis/data/datasets" + path for path in
+json_paths = [  HOME + "/analysis/data/datasets" + path for path in
                 [
                 "/MDOnly/KORE_50_DBpedia.ttl/",
                 "/MDOnly/Reuters-128.ttl/",
